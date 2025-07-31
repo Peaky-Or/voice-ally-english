@@ -14,7 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          achievement_name: string
+          achievement_type: string
+          description: string | null
+          id: string
+          points: number | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_name: string
+          achievement_type: string
+          description?: string | null
+          id?: string
+          points?: number | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_name?: string
+          achievement_type?: string
+          description?: string | null
+          id?: string
+          points?: number | null
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          duration_seconds: number | null
+          grammar_errors: Json | null
+          grammar_score: number | null
+          id: string
+          pronunciation_score: number | null
+          title: string
+          topic_id: string | null
+          transcript: string | null
+          user_id: string
+          vocabulary_score: number | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          grammar_errors?: Json | null
+          grammar_score?: number | null
+          id?: string
+          pronunciation_score?: number | null
+          title: string
+          topic_id?: string | null
+          transcript?: string | null
+          user_id: string
+          vocabulary_score?: number | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          grammar_errors?: Json | null
+          grammar_score?: number | null
+          id?: string
+          pronunciation_score?: number | null
+          title?: string
+          topic_id?: string | null
+          transcript?: string | null
+          user_id?: string
+          vocabulary_score?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          level_score: number | null
+          streak_days: number | null
+          total_conversations: number | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          level_score?: number | null
+          streak_days?: number | null
+          total_conversations?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          level_score?: number | null
+          streak_days?: number | null
+          total_conversations?: number | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      vocabulary: {
+        Row: {
+          created_at: string
+          definition: string | null
+          difficulty_level: number | null
+          example_sentence: string | null
+          id: string
+          last_practiced_at: string | null
+          mastery_level: number | null
+          times_practiced: number | null
+          user_id: string
+          word: string
+        }
+        Insert: {
+          created_at?: string
+          definition?: string | null
+          difficulty_level?: number | null
+          example_sentence?: string | null
+          id?: string
+          last_practiced_at?: string | null
+          mastery_level?: number | null
+          times_practiced?: number | null
+          user_id: string
+          word: string
+        }
+        Update: {
+          created_at?: string
+          definition?: string | null
+          difficulty_level?: number | null
+          example_sentence?: string | null
+          id?: string
+          last_practiced_at?: string | null
+          mastery_level?: number | null
+          times_practiced?: number | null
+          user_id?: string
+          word?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
