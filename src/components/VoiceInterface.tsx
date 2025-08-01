@@ -6,9 +6,10 @@ import { Mic, MicOff, Volume2, Settings } from "lucide-react";
 interface VoiceInterfaceProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedTopic?: string | null;
 }
 
-export const VoiceInterface = ({ isOpen, onClose }: VoiceInterfaceProps) => {
+export const VoiceInterface = ({ isOpen, onClose, selectedTopic }: VoiceInterfaceProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [conversation, setConversation] = useState([
