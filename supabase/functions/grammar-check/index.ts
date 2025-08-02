@@ -17,40 +17,12 @@ serve(async (req) => {
       throw new Error('Text is required')
     }
 
-    // Use Hugging Face's free grammar checking model
-    const response = await fetch(
-      'https://api-inference.huggingface.co/models/textattack/roberta-base-CoLA',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: text,
-        }),
-      }
-    )
+    // Simple grammar analysis without external API
+    console.log('Processing grammar check for:', text)
 
-    if (!response.ok) {
-      throw new Error(`Hugging Face API error: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-    console.log('Grammar check result:', result)
-
-    // Process the result to extract grammar analysis
+    // Basic grammar analysis
     let grammarScore = 85 // Default score
     let errors: string[] = []
-
-    if (Array.isArray(result) && result.length > 0) {
-      const colaScore = result[0]
-      if (colaScore.label === 'LABEL_1') {
-        grammarScore = Math.round(colaScore.score * 100)
-      } else {
-        grammarScore = Math.round((1 - colaScore.score) * 100)
-        errors.push('Grammar issues detected in sentence structure')
-      }
-    }
 
     // Simple additional grammar checks
     const simpleErrors = []
