@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Mic, BookOpen, BarChart3, User, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Mic, BookOpen, BarChart3, User, LogOut, LogIn } from "lucide-react";
 
 export const Navigation = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-border">
@@ -21,23 +23,46 @@ export const Navigation = () => {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
-            <span className="text-foreground/70">
-              Welcome, {user?.email}
-            </span>
+            {user ? (
+              <span className="text-foreground/70">
+                Welcome, {user?.email}
+              </span>
+            ) : (
+              <div className="flex items-center space-x-6">
+                <Button variant="ghost" onClick={() => navigate("/")}>
+                  Home
+                </Button>
+                <Button variant="ghost">
+                  Features
+                </Button>
+                <Button variant="ghost">
+                  About
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <BarChart3 className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <User className="w-5 h-5" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={signOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+            {user ? (
+              <>
+                <Button variant="ghost" size="icon" className="hidden md:flex" onClick={() => navigate("/dashboard")}>
+                  <BarChart3 className="w-5 h-5" />
+                </Button>
+                <Button variant="ghost" size="icon">
+                  <User className="w-5 h-5" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
+                <LogIn className="w-4 h-4 mr-2" />
+                Login
+              </Button>
+            )}
           </div>
         </div>
       </div>
