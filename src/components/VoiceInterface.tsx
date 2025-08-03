@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, Volume2, Settings, Send, Phone, PhoneOff } from "lucide-react";
+import { Mic, MicOff, Volume2, Settings, Send, Phone, PhoneOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useRealtimeVoice } from "@/hooks/useRealtimeVoice";
+import { useBrowserVoice } from "@/hooks/useBrowserVoice";
 import { useAuth } from "@/hooks/useAuth";
 
 interface VoiceInterfaceProps {
@@ -21,9 +21,10 @@ export const VoiceInterface = ({ isOpen, onClose, selectedTopic }: VoiceInterfac
     endConversation, 
     sendMessage, 
     isConnected, 
+    isListening,
     isAISpeaking, 
     conversation 
-  } = useRealtimeVoice();
+  } = useBrowserVoice();
 
   const handleSendMessage = () => {
     const message = textInput.trim();
@@ -142,11 +143,15 @@ export const VoiceInterface = ({ isOpen, onClose, selectedTopic }: VoiceInterfac
               {/* Voice Status */}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  {isAISpeaking ? "AI is speaking..." : "Speak naturally or type your message"}
+                  {isAISpeaking ? "AI is speaking..." : isListening ? "Listening..." : "Speak naturally or type your message"}
                 </p>
                 <div className="flex justify-center space-x-4 mt-2">
-                  <Button variant="outline" size="icon">
-                    <Mic className="w-4 h-4" />
+                  <Button 
+                    variant={isListening ? "default" : "outline"} 
+                    size="icon"
+                    className={isListening ? "animate-pulse" : ""}
+                  >
+                    {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                   </Button>
                   <Button variant="outline" size="icon">
                     <Settings className="w-4 h-4" />
