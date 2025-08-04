@@ -23,113 +23,78 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
   const recognitionRef = useRef<any>(null);
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
-  // Initialize speech recognition
-  const initSpeechRecognition = useCallback(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      throw new Error('Speech recognition not supported in this browser');
-    }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      console.log('Speech recognition started');
-    };
-
-    recognition.onresult = (event: any) => {
-      const last = event.results.length - 1;
-      const text = event.results[last][0].transcript.trim();
-      
-      if (text) {
-        console.log('Speech recognized:', text);
-        handleUserMessage(text);
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      setError(`Speech recognition error: ${event.error}`);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      // Restart recognition if still connected
-      if (isConnected) {
-        setTimeout(() => {
-          if (isConnected && !isAISpeaking) {
-            recognition.start();
-          }
-        }, 100);
-      }
-    };
-
-    return recognition;
-  }, [isConnected, isAISpeaking]);
-
-  // Handle user message and generate AI response
-  const handleUserMessage = useCallback(async (text: string) => {
-    // Add user message to conversation
-    setConversation(prev => [...prev, {
-      speaker: 'User',
-      message: text,
-      timestamp: new Date()
-    }]);
-
-    try {
-      // Simple AI response generation (you can replace this with Hugging Face API)
-      const aiResponse = generateSimpleResponse(text);
-      
-      // Add AI response to conversation
-      setConversation(prev => [...prev, {
-        speaker: 'AI',
-        message: aiResponse,
-        timestamp: new Date()
-      }]);
-
-      // Speak the AI response
-      await speakText(aiResponse);
-    } catch (error) {
-      console.error('Error generating AI response:', error);
-      toast({
-        title: "Error",
-        description: "Failed to generate AI response",
-        variant: "destructive",
-      });
-    }
-  }, []);
-
-  // Simple response generation (replace with Hugging Face API later)
+  // Enhanced response generation with better context awareness
   const generateSimpleResponse = (userText: string): string => {
-    const responses = [
-      "That's interesting! Can you tell me more about that?",
-      "I understand what you're saying. What would you like to practice next?",
-      "Great! Let's continue practicing. How are you feeling about your English speaking?",
-      "That sounds good. Would you like to try a different topic?",
-      "I'm here to help you practice English. What would you like to talk about?",
-      "Excellent! Your pronunciation is getting better. Keep it up!",
-      "Let's work on that together. Can you try saying it again?",
-      "That's a great question! Let me think about that.",
-    ];
-    
-    // Simple keyword-based responses
     const lowerText = userText.toLowerCase();
-    if (lowerText.includes('hello') || lowerText.includes('hi')) {
+    
+    // Greeting responses
+    if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {
       return "Hello! I'm excited to help you practice English today. What would you like to talk about?";
     }
+    
+    // Help and practice requests
     if (lowerText.includes('help') || lowerText.includes('practice')) {
       return "I'm here to help you practice your English speaking skills. Just speak naturally and I'll respond!";
     }
-    if (lowerText.includes('bye') || lowerText.includes('goodbye')) {
+    
+    // Goodbye responses
+    if (lowerText.includes('bye') || lowerText.includes('goodbye') || lowerText.includes('see you')) {
       return "Goodbye! It was great practicing English with you today. Keep up the good work!";
     }
     
-    return responses[Math.floor(Math.random() * responses.length)];
+    // Question responses
+    if (lowerText.includes('how are you') || lowerText.includes('how do you')) {
+      return "I'm doing well, thank you for asking! How are you feeling about your English practice today?";
+    }
+    
+    // Weather related
+    if (lowerText.includes('weather') || lowerText.includes('sunny') || lowerText.includes('rain')) {
+      return "Weather is a great topic for conversation! Can you describe the weather where you are right now?";
+    }
+    
+    // Food related
+    if (lowerText.includes('food') || lowerText.includes('eat') || lowerText.includes('hungry')) {
+      return "Food is one of my favorite topics! What's your favorite dish? Can you describe it to me?";
+    }
+    
+    // Hobbies and interests
+    if (lowerText.includes('hobby') || lowerText.includes('like') || lowerText.includes('enjoy')) {
+      return "That sounds interesting! Tell me more about what you enjoy doing in your free time.";
+    }
+    
+    // Work or study
+    if (lowerText.includes('work') || lowerText.includes('job') || lowerText.includes('study') || lowerText.includes('school')) {
+      return "Work and studies are important parts of life. What do you do? I'd love to hear more about it.";
+    }
+    
+    // Family
+    if (lowerText.includes('family') || lowerText.includes('mother') || lowerText.includes('father') || lowerText.includes('sister') || lowerText.includes('brother')) {
+      return "Family is very important. Can you tell me a bit about your family?";
+    }
+    
+    // Travel
+    if (lowerText.includes('travel') || lowerText.includes('country') || lowerText.includes('city') || lowerText.includes('visit')) {
+      return "Travel is such an exciting topic! Have you been to any interesting places recently?";
+    }
+    
+    // Learning English
+    if (lowerText.includes('english') || lowerText.includes('language') || lowerText.includes('learn')) {
+      return "Learning English is a wonderful journey! What aspect of English would you like to practice most?";
+    }
+    
+    // Default encouraging responses
+    const encouragingResponses = [
+      `You mentioned "${userText}". That's a great topic! Can you tell me more about that?`,
+      "I can hear you're getting more confident with your English. Keep going!",
+      "That's interesting! What made you think about that topic?",
+      "Great! Your pronunciation is improving. Can you expand on that idea?",
+      "I'm following along. What else would you like to share about this?",
+      "Excellent! Let's keep the conversation going. What's your opinion on this?",
+      "That's a good point. How do you feel about it personally?",
+      "Wonderful! You're expressing yourself very well. Continue, please.",
+    ];
+    
+    return encouragingResponses[Math.floor(Math.random() * encouragingResponses.length)];
   };
 
   // Text-to-speech using browser API
@@ -177,6 +142,102 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
     });
   }, []);
 
+  // Handle user message and generate AI response
+  const handleUserMessage = useCallback(async (text: string) => {
+    // Add user message to conversation
+    setConversation(prev => [...prev, {
+      speaker: 'User',
+      message: text,
+      timestamp: new Date()
+    }]);
+
+    try {
+      // Simple AI response generation (you can replace this with Hugging Face API)
+      const aiResponse = generateSimpleResponse(text);
+      
+      // Add AI response to conversation
+      setConversation(prev => [...prev, {
+        speaker: 'AI',
+        message: aiResponse,
+        timestamp: new Date()
+      }]);
+
+      // Speak the AI response
+      await speakText(aiResponse);
+    } catch (error) {
+      console.error('Error generating AI response:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate AI response",
+        variant: "destructive",
+      });
+    }
+  }, [generateSimpleResponse, speakText, toast]);
+
+  // Initialize speech recognition
+  const initSpeechRecognition = useCallback(() => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      throw new Error('Speech recognition not supported in this browser');
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      console.log('Speech recognition started');
+    };
+
+    recognition.onresult = (event: any) => {
+      const last = event.results.length - 1;
+      const text = event.results[last][0].transcript.trim();
+      
+      if (text) {
+        console.log('Speech recognized:', text);
+        handleUserMessage(text);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setError(`Speech recognition error: ${event.error}`);
+      setIsListening(false);
+      
+      // Try to restart after error (except for certain fatal errors)
+      if (event.error !== 'not-allowed' && event.error !== 'service-not-allowed') {
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.error('Could not restart recognition:', e);
+          }
+        }, 1000);
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      console.log('Speech recognition ended');
+      
+      // Restart recognition if still connected and not currently speaking
+      setTimeout(() => {
+        if (recognitionRef.current && isConnected && !isAISpeaking) {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.error('Could not restart recognition:', e);
+          }
+        }
+      }, 500);
+    };
+
+    return recognition;
+  }, [handleUserMessage, isConnected, isAISpeaking]);
+
   // Start conversation
   const startConversation = useCallback(async () => {
     try {
@@ -202,10 +263,14 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       
       // Start listening after greeting
       setTimeout(() => {
-        if (recognitionRef.current && isConnected) {
-          recognitionRef.current.start();
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            console.error('Could not start recognition:', e);
+          }
         }
-      }, 500);
+      }, 1500);
 
       toast({
         title: "Voice Chat Started",
