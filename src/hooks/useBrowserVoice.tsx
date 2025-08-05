@@ -23,88 +23,30 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
   const recognitionRef = useRef<any>(null);
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
-  // Enhanced response generation with better context awareness
-  const generateSimpleResponse = (userText: string, conversationHistory: Array<{ speaker: string; message: string; timestamp: Date }>): string => {
-    const lowerText = userText.toLowerCase();
-    const userMessages = conversationHistory.filter(msg => msg.speaker === 'User').length;
-    
-    // More natural conversation starters
-    const greetings = [
-      "Hello! Nice to meet you! What brings you here today?",
-      "Hi there! I'm excited to chat with you. How has your day been?",
-      "Hey! Great to see you! What would you like to talk about?",
-      "Hello! Welcome! I'm here to help you practice English. What interests you?"
-    ];
-    
-    if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {
-      return greetings[Math.floor(Math.random() * greetings.length)];
-    }
-    
-    // Topic-specific responses with variety
-    if (lowerText.includes('weather')) {
-      const weatherResponses = [
-        "Weather is always changing! What's it like where you are?",
-        "I love talking about weather! Is it your favorite season right now?",
-        "Weather can really affect our mood. How does today's weather make you feel?"
-      ];
-      return weatherResponses[Math.floor(Math.random() * weatherResponses.length)];
-    }
-    
-    if (lowerText.includes('food') || lowerText.includes('eat')) {
-      const foodResponses = [
-        "Food is such a universal language! What did you eat today?",
-        "I'm curious about different cuisines. What's a typical meal in your country?",
-        "Cooking can be so therapeutic. Do you enjoy cooking?"
-      ];
-      return foodResponses[Math.floor(Math.random() * foodResponses.length)];
-    }
-    
-    if (lowerText.includes('work') || lowerText.includes('job')) {
-      const workResponses = [
-        "Work is a big part of life. What do you find most rewarding about your job?",
-        "Every job has its challenges and rewards. What's the best part of your work?",
-        "Career paths can be so interesting. How did you get into your field?"
-      ];
-      return workResponses[Math.floor(Math.random() * workResponses.length)];
-    }
-    
-    if (lowerText.includes('family')) {
-      const familyResponses = [
-        "Family relationships are so important. Do you have any siblings?",
-        "Family traditions can be really special. What's your favorite family memory?",
-        "Every family is unique. What makes your family special?"
-      ];
-      return familyResponses[Math.floor(Math.random() * familyResponses.length)];
-    }
-    
-    if (lowerText.includes('travel') || lowerText.includes('country')) {
-      const travelResponses = [
-        "Travel opens our minds to new experiences! Where would you love to visit?",
-        "Different cultures fascinate me. What's the most interesting place you've been?",
-        "Adventure awaits everywhere! Do you prefer beaches, mountains, or cities?"
-      ];
-      return travelResponses[Math.floor(Math.random() * travelResponses.length)];
-    }
-    
-    // Contextual responses based on conversation length
-    if (userMessages < 3) {
-      const earlyResponses = [
-        `Interesting that you mentioned "${userText}". I'd love to hear more!`,
-        "You're doing great with your English! Please continue sharing your thoughts.",
-        "That's a wonderful topic! What made you think of that?",
-        "I can tell you have interesting things to say. Tell me more!"
-      ];
-      return earlyResponses[Math.floor(Math.random() * earlyResponses.length)];
-    } else {
-      const continuingResponses = [
-        "You're really opening up now! This conversation is flowing nicely.",
-        `Building on what you said about "${userText}" - what's your personal experience with this?`,
-        "I'm enjoying our chat! Your English expression is getting more natural.",
-        "Great insight! How do you think this connects to your daily life?",
-        "You're sharing such thoughtful ideas. What else comes to mind?",
-        "This is exactly the kind of deep conversation that improves language skills!"
-      ];
-      return continuingResponses[Math.floor(Math.random() * continuingResponses.length)];
+  // Generate AI response using OpenAI API
+  const generateAIResponse = async (userText: string, conversationHistory: Array<{ speaker: string; message: string; timestamp: Date }>): Promise<string> => {
+    try {
+      const response = await fetch('https://chdbqxtasxiibgncrhdf.supabase.co/functions/v1/chat-ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userText,
+          conversationHistory: conversationHistory
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      // Fallback to simple response
+      return "I'm having trouble connecting right now. Can you try saying that again?";
     }
   };
 
@@ -163,8 +105,8 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
     }]);
 
     try {
-      // Generate contextual AI response
-      const aiResponse = generateSimpleResponse(text, conversation);
+      // Generate real AI response using OpenAI
+      const aiResponse = await generateAIResponse(text, conversation);
       
       // Add AI response to conversation
       setConversation(prev => [...prev, {
