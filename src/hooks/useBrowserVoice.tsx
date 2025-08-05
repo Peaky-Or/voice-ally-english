@@ -24,77 +24,88 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
   // Enhanced response generation with better context awareness
-  const generateSimpleResponse = (userText: string): string => {
+  const generateSimpleResponse = (userText: string, conversationHistory: Array<{ speaker: string; message: string; timestamp: Date }>): string => {
     const lowerText = userText.toLowerCase();
+    const userMessages = conversationHistory.filter(msg => msg.speaker === 'User').length;
     
-    // Greeting responses
-    if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {
-      return "Hello! I'm excited to help you practice English today. What would you like to talk about?";
-    }
-    
-    // Help and practice requests
-    if (lowerText.includes('help') || lowerText.includes('practice')) {
-      return "I'm here to help you practice your English speaking skills. Just speak naturally and I'll respond!";
-    }
-    
-    // Goodbye responses
-    if (lowerText.includes('bye') || lowerText.includes('goodbye') || lowerText.includes('see you')) {
-      return "Goodbye! It was great practicing English with you today. Keep up the good work!";
-    }
-    
-    // Question responses
-    if (lowerText.includes('how are you') || lowerText.includes('how do you')) {
-      return "I'm doing well, thank you for asking! How are you feeling about your English practice today?";
-    }
-    
-    // Weather related
-    if (lowerText.includes('weather') || lowerText.includes('sunny') || lowerText.includes('rain')) {
-      return "Weather is a great topic for conversation! Can you describe the weather where you are right now?";
-    }
-    
-    // Food related
-    if (lowerText.includes('food') || lowerText.includes('eat') || lowerText.includes('hungry')) {
-      return "Food is one of my favorite topics! What's your favorite dish? Can you describe it to me?";
-    }
-    
-    // Hobbies and interests
-    if (lowerText.includes('hobby') || lowerText.includes('like') || lowerText.includes('enjoy')) {
-      return "That sounds interesting! Tell me more about what you enjoy doing in your free time.";
-    }
-    
-    // Work or study
-    if (lowerText.includes('work') || lowerText.includes('job') || lowerText.includes('study') || lowerText.includes('school')) {
-      return "Work and studies are important parts of life. What do you do? I'd love to hear more about it.";
-    }
-    
-    // Family
-    if (lowerText.includes('family') || lowerText.includes('mother') || lowerText.includes('father') || lowerText.includes('sister') || lowerText.includes('brother')) {
-      return "Family is very important. Can you tell me a bit about your family?";
-    }
-    
-    // Travel
-    if (lowerText.includes('travel') || lowerText.includes('country') || lowerText.includes('city') || lowerText.includes('visit')) {
-      return "Travel is such an exciting topic! Have you been to any interesting places recently?";
-    }
-    
-    // Learning English
-    if (lowerText.includes('english') || lowerText.includes('language') || lowerText.includes('learn')) {
-      return "Learning English is a wonderful journey! What aspect of English would you like to practice most?";
-    }
-    
-    // Default encouraging responses
-    const encouragingResponses = [
-      `You mentioned "${userText}". That's a great topic! Can you tell me more about that?`,
-      "I can hear you're getting more confident with your English. Keep going!",
-      "That's interesting! What made you think about that topic?",
-      "Great! Your pronunciation is improving. Can you expand on that idea?",
-      "I'm following along. What else would you like to share about this?",
-      "Excellent! Let's keep the conversation going. What's your opinion on this?",
-      "That's a good point. How do you feel about it personally?",
-      "Wonderful! You're expressing yourself very well. Continue, please.",
+    // More natural conversation starters
+    const greetings = [
+      "Hello! Nice to meet you! What brings you here today?",
+      "Hi there! I'm excited to chat with you. How has your day been?",
+      "Hey! Great to see you! What would you like to talk about?",
+      "Hello! Welcome! I'm here to help you practice English. What interests you?"
     ];
     
-    return encouragingResponses[Math.floor(Math.random() * encouragingResponses.length)];
+    if (lowerText.includes('hello') || lowerText.includes('hi') || lowerText.includes('hey')) {
+      return greetings[Math.floor(Math.random() * greetings.length)];
+    }
+    
+    // Topic-specific responses with variety
+    if (lowerText.includes('weather')) {
+      const weatherResponses = [
+        "Weather is always changing! What's it like where you are?",
+        "I love talking about weather! Is it your favorite season right now?",
+        "Weather can really affect our mood. How does today's weather make you feel?"
+      ];
+      return weatherResponses[Math.floor(Math.random() * weatherResponses.length)];
+    }
+    
+    if (lowerText.includes('food') || lowerText.includes('eat')) {
+      const foodResponses = [
+        "Food is such a universal language! What did you eat today?",
+        "I'm curious about different cuisines. What's a typical meal in your country?",
+        "Cooking can be so therapeutic. Do you enjoy cooking?"
+      ];
+      return foodResponses[Math.floor(Math.random() * foodResponses.length)];
+    }
+    
+    if (lowerText.includes('work') || lowerText.includes('job')) {
+      const workResponses = [
+        "Work is a big part of life. What do you find most rewarding about your job?",
+        "Every job has its challenges and rewards. What's the best part of your work?",
+        "Career paths can be so interesting. How did you get into your field?"
+      ];
+      return workResponses[Math.floor(Math.random() * workResponses.length)];
+    }
+    
+    if (lowerText.includes('family')) {
+      const familyResponses = [
+        "Family relationships are so important. Do you have any siblings?",
+        "Family traditions can be really special. What's your favorite family memory?",
+        "Every family is unique. What makes your family special?"
+      ];
+      return familyResponses[Math.floor(Math.random() * familyResponses.length)];
+    }
+    
+    if (lowerText.includes('travel') || lowerText.includes('country')) {
+      const travelResponses = [
+        "Travel opens our minds to new experiences! Where would you love to visit?",
+        "Different cultures fascinate me. What's the most interesting place you've been?",
+        "Adventure awaits everywhere! Do you prefer beaches, mountains, or cities?"
+      ];
+      return travelResponses[Math.floor(Math.random() * travelResponses.length)];
+    }
+    
+    // Contextual responses based on conversation length
+    if (userMessages < 3) {
+      const earlyResponses = [
+        `Interesting that you mentioned "${userText}". I'd love to hear more!`,
+        "You're doing great with your English! Please continue sharing your thoughts.",
+        "That's a wonderful topic! What made you think of that?",
+        "I can tell you have interesting things to say. Tell me more!"
+      ];
+      return earlyResponses[Math.floor(Math.random() * earlyResponses.length)];
+    } else {
+      const continuingResponses = [
+        "You're really opening up now! This conversation is flowing nicely.",
+        `Building on what you said about "${userText}" - what's your personal experience with this?`,
+        "I'm enjoying our chat! Your English expression is getting more natural.",
+        "Great insight! How do you think this connects to your daily life?",
+        "You're sharing such thoughtful ideas. What else comes to mind?",
+        "This is exactly the kind of deep conversation that improves language skills!"
+      ];
+      return continuingResponses[Math.floor(Math.random() * continuingResponses.length)];
+    }
   };
 
   // Text-to-speech using browser API
@@ -152,8 +163,8 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
     }]);
 
     try {
-      // Simple AI response generation (you can replace this with Hugging Face API)
-      const aiResponse = generateSimpleResponse(text);
+      // Generate contextual AI response
+      const aiResponse = generateSimpleResponse(text, conversation);
       
       // Add AI response to conversation
       setConversation(prev => [...prev, {
@@ -172,7 +183,7 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
         variant: "destructive",
       });
     }
-  }, [generateSimpleResponse, speakText, toast]);
+  }, [speakText, toast, conversation]);
 
   // Initialize speech recognition
   const initSpeechRecognition = useCallback(() => {
@@ -210,10 +221,12 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       // Try to restart after error (except for certain fatal errors)
       if (event.error !== 'not-allowed' && event.error !== 'service-not-allowed') {
         setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.error('Could not restart recognition:', e);
+          if (isConnected && !isAISpeaking) {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.error('Could not restart recognition:', e);
+            }
           }
         }, 1000);
       }
@@ -225,7 +238,7 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       
       // Restart recognition if still connected and not currently speaking
       setTimeout(() => {
-        if (recognitionRef.current && isConnected && !isAISpeaking) {
+        if (isConnected && !isAISpeaking) {
           try {
             recognition.start();
           } catch (e) {
@@ -236,7 +249,7 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
     };
 
     return recognition;
-  }, [handleUserMessage, isConnected, isAISpeaking]);
+  }, [handleUserMessage]);
 
   // Start conversation
   const startConversation = useCallback(async () => {
