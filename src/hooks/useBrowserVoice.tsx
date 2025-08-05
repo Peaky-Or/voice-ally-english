@@ -218,8 +218,21 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       setError(`Speech recognition error: ${event.error}`);
       setIsListening(false);
       
-      // Try to restart after error (except for certain fatal errors)
-      if (event.error !== 'not-allowed' && event.error !== 'service-not-allowed') {
+      // Show user-friendly error messages
+      if (event.error === 'not-allowed') {
+        toast({
+          title: "Microphone Access Denied",
+          description: "Please allow microphone access in your browser settings",
+          variant: "destructive",
+        });
+      } else if (event.error === 'network') {
+        toast({
+          title: "Network Error",
+          description: "Voice recognition requires a stable internet connection",
+          variant: "destructive",
+        });
+      } else if (event.error === 'no-speech') {
+        // Don't show error for no-speech, just restart
         setTimeout(() => {
           if (isConnected && !isAISpeaking) {
             try {
@@ -229,6 +242,20 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
             }
           }
         }, 1000);
+        return;
+      }
+      
+      // Try to restart after other errors
+      if (event.error !== 'not-allowed' && event.error !== 'service-not-allowed') {
+        setTimeout(() => {
+          if (isConnected && !isAISpeaking) {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.error('Could not restart recognition:', e);
+            }
+          }
+        }, 2000);
       }
     };
 
@@ -256,8 +283,27 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
     try {
       setError(null);
       
+      // Check for microphone permission first
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (permissionError) {
+        toast({
+          title: "Microphone Permission Required",
+          description: "Please allow microphone access to use voice features",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       // Initialize speech synthesis
       synthesisRef.current = window.speechSynthesis;
+      
+      // Wait for voices to load
+      if (synthesisRef.current.getVoices().length === 0) {
+        await new Promise(resolve => {
+          synthesisRef.current!.onvoiceschanged = () => resolve(undefined);
+        });
+      }
       
       // Initialize speech recognition
       recognitionRef.current = initSpeechRecognition();
@@ -274,16 +320,21 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       
       await speakText(greeting);
       
-      // Start listening after greeting
+      // Start listening after greeting with better error handling
       setTimeout(() => {
-        if (recognitionRef.current) {
+        if (recognitionRef.current && isConnected) {
           try {
             recognitionRef.current.start();
           } catch (e) {
             console.error('Could not start recognition:', e);
+            toast({
+              title: "Voice Recognition Error",
+              description: "Try refreshing the page or check your microphone settings",
+              variant: "destructive",
+            });
           }
         }
-      }, 1500);
+      }, 2000);
 
       toast({
         title: "Voice Chat Started",
@@ -295,11 +346,11 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       setError(error instanceof Error ? error.message : 'Failed to start conversation');
       toast({
         title: "Error",
-        description: "Failed to start voice conversation. Please check your browser permissions.",
+        description: "Failed to start voice conversation. Please check your browser permissions and try again.",
         variant: "destructive",
       });
     }
-  }, [initSpeechRecognition, isConnected, speakText, toast]);
+  }, [initSpeechRecognition, speakText, toast]);
 
   // End conversation
   const endConversation = useCallback(() => {
