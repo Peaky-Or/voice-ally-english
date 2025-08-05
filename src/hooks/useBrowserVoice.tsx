@@ -1,5 +1,6 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useLocalAI } from './useLocalAI';
 
 interface UseBrowserVoiceReturn {
   startConversation: () => Promise<void>;
@@ -19,36 +20,17 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
   const [conversation, setConversation] = useState<Array<{ speaker: string; message: string; timestamp: Date }>>([]);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const { generateResponse, isLoading: aiLoading, isInitialized, initializeModel } = useLocalAI();
   
   const recognitionRef = useRef<any>(null);
   const synthesisRef = useRef<SpeechSynthesis | null>(null);
 
-  // Generate AI response using OpenAI API
-  const generateAIResponse = async (userText: string, conversationHistory: Array<{ speaker: string; message: string; timestamp: Date }>): Promise<string> => {
-    try {
-      const response = await fetch('https://chdbqxtasxiibgncrhdf.supabase.co/functions/v1/chat-ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userText,
-          conversationHistory: conversationHistory
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
-      const data = await response.json();
-      return data.response;
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-      // Fallback to simple response
-      return "I'm having trouble connecting right now. Can you try saying that again?";
+  // Initialize the AI model when component mounts
+  useEffect(() => {
+    if (!isInitialized) {
+      initializeModel();
     }
-  };
+  }, [isInitialized, initializeModel]);
 
   // Text-to-speech using browser API
   const speakText = useCallback(async (text: string) => {
@@ -105,8 +87,18 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
     }]);
 
     try {
-      // Generate real AI response using OpenAI
-      const aiResponse = await generateAIResponse(text, conversation);
+      // Check if AI model is ready
+      if (!isInitialized) {
+        toast({
+          title: "AI Loading",
+          description: "AI model is still loading. Please wait a moment.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generate AI response using local model
+      const aiResponse = await generateResponse(text, conversation);
       
       // Add AI response to conversation
       setConversation(prev => [...prev, {
@@ -125,7 +117,7 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
         variant: "destructive",
       });
     }
-  }, [speakText, toast, conversation]);
+  }, [generateResponse, speakText, toast, conversation, isInitialized]);
 
   // Initialize speech recognition
   const initSpeechRecognition = useCallback(() => {
@@ -251,6 +243,11 @@ export const useBrowserVoice = (): UseBrowserVoiceReturn => {
       recognitionRef.current = initSpeechRecognition();
       
       setIsConnected(true);
+      
+      // Initialize AI model if not ready
+      if (!isInitialized) {
+        await initializeModel();
+      }
       
       // Start with a greeting
       const greeting = "Hello! I'm your English conversation partner. Start speaking and I'll help you practice!";
